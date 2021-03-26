@@ -1,0 +1,244 @@
+---
+title: "Hypothesis Testing"
+author: "Kenenth Koh"
+date: "11/2/2020"
+output: html_document
+---
+# One sample t-test (population mean given or hypothesized)
+
+## MacDonald
+
+McDonald has developed a new drive-through process. They hoped that the new process can reduce their drive-through service time. 
+
+It has tried out the new process in 25 stores. 
+
+In past, McDonald’s had a mean service time of 174.22 seconds.
+
+The new mean service time is 159.02 seconds. 
+#shorter sample mean time as compared to population mean time
+
+Does McDonald have the evidence to show that the new process is better than the previous process?
+
+Did reduction just happen by chance/luck (random) ?
+
+## MacDonald's dataset
+
+```{r}
+mac = read.csv("McDonalds.csv")
+mean(mac$Time)
+```
+
+```{r}
+# Test if the new drive thru has a lesser mean time than population
+# Reasonable to assume equal variance since they are off the same 
+# population
+t.test(mac$Time,
+       mu=174.22, 
+       alternative = "less",
+       conf.level = 0.95,
+       var.equal = TRUE)
+
+```
+
+```{r}
+# THIS R-CHUNK IS NOT PART OF ANSWER BUT FOR UNDERSTANDING
+
+# Two sided - Check if the mean time new drive thru are different from
+# population mean
+# By default alternative = two sided, conf level = 0.95, var.equal = F)
+t.test(mac$Time, 
+       mu=174.22, 
+       alternative = "two.sided",
+       conf.level = 0.95,
+       var.equal = FALSE)
+
+# THIS R-CHUNK  IS NOT PART OF ANSWER BUT FOR UNDERSTANDING
+
+```
+
+## The New Yorker
+
+One year ago, the New Yorker  magazine implemented cyber security measures in its database server to reduce security breaches to its subscribers. Before the implementation, the mean number of security breaches reported by its subscribers is 4.3 cases per day.  The company selected a random sample of 20 days of cases in each day to determine the effectiveness of the cyber security measures since the implementation:
+
+3.2, 2.2, 4.1, 5.2, 3.4, 3.5, 4.1, 2.6, 3.4, 4.5, 4.5, 3.6, 5.2, 2.5, 3.4, 4.5, 3.5, 3.8, 4.1, 2.7
+
+The mean number of cases per day based on the above sample is 3.70. 
+
+Does the New Yorker have the evidence to show that the cyber security measures are effective?
+
+```{r}
+
+cases = c(3.2, 2.2, 4.1, 5.2, 3.4, 3.5, 4.1, 2.6, 3.4, 4.5, 4.5, 3.6, 5.2, 2.5, 3.4, 4.5, 3.5, 3.8, 4.1, 2.7)
+
+t.test(cases, 
+       mu = 3.7,
+       conf.level = 0.95,
+       alternative = "less",
+       var.equal = TRUE)
+```
+
+# Two Sample T-Test (Independent)
+
+## Telecommunication company
+
+A problem with a phone line that prevents a customer from receiving or making calls is upsetting to both the  customer and the telecommunication company
+
+We have sample data of 20 problems reported to two different offices of the telecommunications company and the  time to clear these problems ( in minutes) from the customers’ lines as given in the table below:
+
+Assuming that the population variances from both offices are equal, is there evidence of a difference in the mean  waiting time between two offices - at 95% confidence level?
+
+### create data frame
+
+```{r}
+office_1 = c(1.48, 1.75, 0.78, 2.85, 0.52, 1.6, 4.15, 3.97, 1.48, 3.1, 1.02, 0.53, 0.93, 1.6, 0.8, 1.05, 6.32, 3.93, 5.45, 0.97)
+
+office_2 = c(7.55, 3.75, 0.1, 1.1, 0.6, 0.52, 3.3, 2.1, 0.58, 4.02, 3.75, 0.65, 1.92, 0.6, 1.53, 4.23, 0.08, 1.48, 1.65, 0.72)
+
+length(office_1)
+length(office_2)
+
+df = data.frame(
+  group = rep(c("office_1", "office_2"), each = 20),
+  time = c(office_1, office_2)
+  )
+
+df
+```
+
+### summarising data
+
+```{r}
+aggregate(time~group, df, mean)
+```
+
+### plotting data
+
+```{r}
+boxplot(time~group, df)
+```
+
+### Assume popoulation variance is equal between 2 groups
+
+Since customers are generally similar between the two call centers, it is reasonable to assume that the variance between 2 groups are similar.
+
+when var.equal = TRUE, the formula of t.test turns to pooled variance.
+
+```{r}
+
+# Using formula method
+t.test(time~group, 
+       data = df,
+       conf.level = 0.95,
+       var.equal = TRUE,
+       alternative = "two.sided")
+
+# using vector method
+t.test(x = office_1, y=office_2, 
+       conf.level = 0.95,
+       var.equal = TRUE,
+       alternative = "two.sided")
+```
+
+### Test to check equal variance
+
+We can use F-test (var.test) or Levene's test (leveneTest from car package) to test for homogeneity in variances. 
+
+var.test() can only compare variance between 2 groups, whereas Levene's Test can compare variances between 2 or more groups. Hence in ANOVA topic, Levene's Test is used instead.
+
+- Null hypothesis is equal variance between the 2 groups.
+- Alternate hypothesis is unequal variance between the 2 groups.
+- p-value of less than 0.05 will reject null hypothesis, thus accepting the alternative hypothesis.
+
+
+```{r}
+var.test(time~group, df)
+
+library(car)
+leveneTest(time~group, df)
+```
+
+
+## Coles Research 
+
+Coles Research a test laboratory is engaged by NTUC to evaluate the moisture of in-house brands wet wipes offered by various supermarket chains as compared to branded wet wipes.
+
+Based on 9 random sample of in-house brand wet wipes collected, the moisture in mililiters of each in-house brand is reported as follows:
+
+8 , 8, 3, 1, 9, 7, 5, 5, 12
+
+Another 12 random sample of branded wet wipes are selected and the moisture in mililiters for each brand is report as follows:
+
+12, 11, 10, 6, 8, 9, 9, 10, 11, 9, 8, 10
+
+Use a 0.10 significance level and test if there is a differences in the mean amount of moisture between the two types of wipe wets
+
+
+```{r}
+in_house = c( 8,  8,  3, 1, 9, 7, 5,  5, 12)
+branded  = c(12, 11, 10, 6, 8, 9, 9, 10, 11, 9, 8, 10)
+
+mean(in_house)
+mean(branded)
+```
+
+### Assume unequal variances between the 2 groups
+
+Since in-house and branded products maybe manufactured differently, it is reasonable to assume that their variances are unequal.
+
+when var.equal = FALSE, the formula of t.test turns to a Welch Test
+
+```{r}
+t.test(x = in_house, y = branded,
+       alternative = "two.sided",
+       var.equal = FALSE,
+       conf.level = 0.90)
+```
+
+### Test to check equal variance 
+
+Notice that LeveneTest requires formula method y~x, hence we'll stick to var.test() instead.
+
+- Null hypothesis is equal variance between the 2 groups.
+- Alternate hypothesis is unequal variance between the 2 groups.
+- p-value of less than 0.05 will reject null hypothesis, thus accepting the alternative hypothesis.
+
+```{r}
+var.test(in_house, branded)
+
+# p-value is 0.03 (less than 0.05) => Reject H0 (equal variance between groups)
+# We concluded that there is unequal variance between the groups
+```
+
+# Two Sample T-Test (Paired)
+
+## Blood count
+
+A clinical trial on the efficiacy of a new oral pill to increase red blood cell is conducted on a sample size of 100 patients suffering from red blood cell disorder. During the trial, the patients is required to take 2 pills daily for 7 days.
+
+A red blood count test was conducted on each patient before the start of trial. At the end of the 7 days of clinical trial, a blood count test is conducted again to evaluate if the treatment works. Did the new drug help to increase the red blood cell count of the patients? (one-tailed test)
+
+Null hypothesis: There is no difference in blood count before and after the trial.
+Alternate hypothesis: There is an improvement of blood count from the new treatment.
+
+```{r}
+preTreatment = c(154, 158, 151, 138, 142, 135, 144, 161, 136, 154, 146, 144, 144, 155, 133, 145, 165, 158, 139, 139)
+
+postTreatment = c(142, 150, 151, 142, 151, 147, 140, 142, 129, 128, 138, 149, 148, 123, 134, 144, 135, 142, 139, 139)
+```
+
+
+- p-value of less than 0.05 will reject null hypothesis, thus accepting the alternative hypothesis.
+
+From Paired t-test, the p-value is 0.01749 (< 0.05)
+
+We can concolude that There is a significant difference between pre and post treatment
+
+
+```{r}
+t.test(preTreatment, postTreatment, 
+       paired = TRUE,
+       conf.level = 0.95,
+       alternative = "greater",
+       var.equal = TRUE)
+```
+
